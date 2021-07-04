@@ -36,40 +36,65 @@
  * provisions above, a recipient may use your version of this file under
  * either the BSD or the GPL.
  */
-#ifndef _LOG_FUNCTION_LOG_H_
-#define _LOG_FUNCTION_LOG_H_
+#ifndef _LOG_FUNCTION_LOGFILE_H_
+#define _LOG_FUNCTION_LOGFILE_H_
 #include <stdio.h>
 #include <string.h>
-
+#include <time.h>
 #ifndef _LOG_BASE_FUNC
 #define _LOG_BASE_FUNC
-#define _LOG_BAE(fd, title, ...)\
-	fprintf(fd, title);\
-	fprintf(fd, __VA_ARGS__);\
-	fprintf(fd, " (line:%d)\n", __LINE__);
-#endif
+#define _LOG_BASE(fd, title, ...) {\
+    char buff[512]={0};\
+	sprintf(buff, "%s", title);\
+	sprintf(buff+strlen(buff), __VA_ARGS__);\
+	sprintf(buff+strlen(buff), " line(%d)\n", __LINE__);\
+    buff[511]='\0';\
+	fprintf(fd, buff);\
+	LogFile::instance()->Write(buff);}
+	//fprintf(fd, buff);\
+    LogFile::instance()->Write(buff);
 
-#if defined REL
-	#define LOG_E(...) _LOG_BASE(stderr, "[ERR]", __VA_ARGS__)
-	#define LOG_R(...)
-	#define LOG_I(...)
-	#define LOG(...)
-#elif defined RUN
-	#define LOG_E(...) _LOG_BASE(stderr, "[ERR]", __VA_ARGS__)
-	#define LOG_R(...) _LOG_BASE(stdout, "[RUN]", __VA_ARGS__)
-	#define LOG_I(...)
-	#define LOG(...)
-#else
-	#define LOG_E(...) _LOG_BASE(stderr, "[ERR]", __VA_ARGS__)
-	#define LOG_R(...) _LOG_BASE(stdout, "[RUN]", __VA_ARGS__) 
-	#define LOG_I(...) _LOG_BASE(stdout, "[INF]", __VA_ARGS__)
-	#define LOG(...)   _LOG_BASE(stdout, "", __VA_ARGS__)
-#endif
+class LogFile 
+{
+public:
+	static LogFile* instance() {
+		static LogFile s_log;
+		return &s_log;
+	}
+	void Init(const char* filename = NULL) {
+		if (fd) {fclose(fd);fd = NULL;}
+		if (filename) {
+			fd = fopen(filename, "w+");
+			fseek(fd, 0, SEEK_END);
+		}
+        else {
+            time_t t = time(NULL);
+            struct tm *gmt = localtime(&t);
+            char filename[32] = { 0 };
+            sprintf(filename, "log-%04d%02d%02d-%02d%02d%02d.log",
+                gmt->tm_year+1900,
+                gmt->tm_mon+1,
+                gmt->tm_mday,
+                gmt->tm_hour,
+                gmt->tm_min,
+                gmt->tm_sec);
+            fd = fopen(filename, "w+");
+            fseek(fd, 0, SEEK_END);
+        }
+	}
+	void Write(char *buff) {
+	    if(!fd) Init(NULL);
+		if (fd && buff) {
+			fwrite(buff, 1, strlen(buff), fd);
+		}
+	}
+private:
+	LogFile():fd(NULL) {}
+	~LogFile() {if (fd) fclose(fd);}
+	FILE* fd;
+};
 
-#ifdef DBG
-	#define LOG_D(...) LOG_BASE(stdout, "[DBG]", __VA_ARGS__)
-#else
-	#define LOG_D(...)
+#include "log.h"
 #endif
 
 #endif
