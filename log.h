@@ -43,10 +43,13 @@
 
 #ifndef _LOG_BASE_FUNC
 #define _LOG_BASE_FUNC
-#define _LOG_BAE(fd, title, ...)\
+#define _LOG_BASE(fd, title, ...)\
 	fprintf(fd, title);\
 	fprintf(fd, __VA_ARGS__);\
 	fprintf(fd, " (line:%d)\n", __LINE__);
+#define _LOG_BASE_PURE(...)\
+    fprintf(stdout, __VA_ARGS__);\
+	fprintf(stdout, "\n");
 #endif
 
 #if defined REL
@@ -63,7 +66,7 @@
 	#define LOG_E(...) _LOG_BASE(stderr, "[ERR]", __VA_ARGS__)
 	#define LOG_R(...) _LOG_BASE(stdout, "[RUN]", __VA_ARGS__) 
 	#define LOG_I(...) _LOG_BASE(stdout, "[INF]", __VA_ARGS__)
-	#define LOG(...)   _LOG_BASE(stdout, "", __VA_ARGS__)
+	#define LOG(...)   _LOG_BASE_PURE(__VA_ARGS__)
 #endif
 
 #ifdef DBG

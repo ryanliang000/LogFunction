@@ -1,7 +1,8 @@
 #include "logfile.h"
-
+#include "elapsed.h"
 int main()
 {
+    Elapsed e("main");
 	LOG_E("hi error");
 	LOG_R("hi run");
 	LOG_I("hi info");
