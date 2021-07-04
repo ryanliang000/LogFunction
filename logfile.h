@@ -51,8 +51,6 @@
     buff[511]='\0';\
 	fprintf(fd, buff);\
 	LogFile::instance()->Write(buff);}
-	//fprintf(fd, buff);\
-    LogFile::instance()->Write(buff);
 
 class LogFile 
 {
