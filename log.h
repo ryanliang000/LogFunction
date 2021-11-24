@@ -1,7 +1,7 @@
 /*
- * logfunction 
+ * xevent backend
  *
- * Copyright (c) 2020 Rain
+ * Copyright (c) 2020 Rain Liang
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modifica-
@@ -36,43 +36,53 @@
  * provisions above, a recipient may use your version of this file under
  * either the BSD or the GPL.
  */
-#ifndef _LOG_FUNCTION_LOG_H_
-#define _LOG_FUNCTION_LOG_H_
+#ifndef _LOG_H_202111_
+#define _LOG_H_202111_
 #include <stdio.h>
 #include <string.h>
 
 #ifndef _LOG_BASE_FUNC
 #define _LOG_BASE_FUNC
-#define _LOG_BASE(fd, title, ...)\
-	fprintf(fd, title);\
-	fprintf(fd, __VA_ARGS__);\
-	fprintf(fd, " (line:%d)\n", __LINE__);
-#define _LOG_BASE_PURE(...)\
-    fprintf(stdout, __VA_ARGS__);\
-	fprintf(stdout, "\n");
+#include <time.h>
+static char* __gettime(){
+   static char buf[32] = {0};
+   time_t t = time(NULL);
+   struct tm* local = localtime(&t);
+   sprintf(buf, "%04d%02d%02d-%02d:%02d:%02d",
+        local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
+        local->tm_hour, local->tm_min, local->tm_sec);
+   return buf;
+}
+#define _LOG_BASE(fd, title, ...)                                                    \
+  fprintf(fd, "%s ", __gettime());                                              \
+  fprintf(fd, title);                                                          \
+  fprintf(fd, __VA_ARGS__);                                                    \
+  fprintf(fd, " (%s:%d)\n", __FILE__, __LINE__);
 #endif
 
-#if defined REL
-	#define LOG_E(...) _LOG_BASE(stderr, "[ERR]", __VA_ARGS__)
-	#define LOG_R(...)
-	#define LOG_I(...)
-	#define LOG(...)
+#ifdef REL
+#define LOG_E(...) _LOG(stderr, "[ERR]", __VA_ARGS__)
+#define LOG_W(...) 
+#define LOG_R(...)
+#define LOG_I(...)
 #elif defined RUN
-	#define LOG_E(...) _LOG_BASE(stderr, "[ERR]", __VA_ARGS__)
-	#define LOG_R(...) _LOG_BASE(stdout, "[RUN]", __VA_ARGS__)
-	#define LOG_I(...)
-	#define LOG(...)
+#define LOG_E(...) _LOG(stderr, "[ERR]", __VA_ARGS__)
+#define LOG_R(...) _LOG(stdout, "[RUN]", __VA_ARGS__)
+#define LOG_W(...) _LOG(stdout, "[WARN]", __VA_ARGS__)
+#define LOG_I(...)
 #else
-	#define LOG_E(...) _LOG_BASE(stderr, "[ERR]", __VA_ARGS__)
-	#define LOG_R(...) _LOG_BASE(stdout, "[RUN]", __VA_ARGS__) 
-	#define LOG_I(...) _LOG_BASE(stdout, "[INF]", __VA_ARGS__)
-	#define LOG(...)   _LOG_BASE_PURE(__VA_ARGS__)
+#define LOG_E(...) _LOG(stderr, "[ERR]", __VA_ARGS__)
+#define LOG_W(...) _LOG(stdout, "[WARN]", __VA_ARGS__)
+#define LOG_R(...) _LOG(stdout, "[RUN]", __VA_ARGS__)
+#define LOG_I(...) _LOG(stdout, "[INF]", __VA_ARGS__)
 #endif
+
+#define LOG(...) _LOG(stdout, "", __VA_ARGS__) 
 
 #ifdef DBG
-	#define LOG_D(...) LOG_BASE(stdout, "[DBG]", __VA_ARGS__)
+#define LOG_D(...) _LOG(stdout, "[DBG]", __VA_ARGS__)
 #else
-	#define LOG_D(...)
+#define LOG_D(...)
 #endif
 
 #endif

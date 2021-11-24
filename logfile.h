@@ -40,24 +40,28 @@
 #define _LOG_FUNCTION_LOGFILE_H_
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #ifndef _LOG_BASE_FUNC
 #define _LOG_BASE_FUNC
-#define _LOG_BASE(fd, title, ...) {\
-    char buff[512]={0};\
+#include <time.h>
+static char* __gettime(){
+   static char buf[32] = {0};
+   time_t t = time(NULL);
+   struct tm* local = localtime(&t);
+   sprintf(buf, "%04d%02d%02d-%02d:%02d:%02d",
+        local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
+        local->tm_hour, local->tm_min, local->tm_sec);
+   return buf;
+}
+
+#define _LOG(fd, title, ...) {\
+    char buff[1024]={0};\
+	sprintf(buff, "%s ", __gettime());\
 	sprintf(buff, "%s", title);\
 	sprintf(buff+strlen(buff), __VA_ARGS__);\
 	sprintf(buff+strlen(buff), " line(%d)\n", __LINE__);\
-    buff[511]='\0';\
+    buff[sizeof(buff)-1]='\0';\
 	fprintf(fd, "%s", buff);\
 	LogFile::instance()->Write(buff);}
-#define _LOG_BASE_PURE(...) {\
-    char buff[512]={0};\
-	sprintf(buff, __VA_ARGS__);\
-	sprintf(buff+strlen(buff), "\n");\
-	buff[511]='\0';\
-    fprintf(stdout, "%s", buff);\
-    LogFile::instance()->Write(buff);}
 
 class LogFile 
 {
@@ -66,6 +70,26 @@ public:
 		static LogFile s_log;
 		return &s_log;
 	}
+    char* GetRandLogName(){
+	    static char filename[32] = { 0 };
+        time_t t = time(NULL);
+        struct tm *gmt = localtime(&t);
+        sprintf(filename, "log-%04d%02d%02d-%02d%02d%02d.log",
+                gmt->tm_year+1900,
+                gmt->tm_mon+1,
+                gmt->tm_mday,
+                gmt->tm_hour,
+                gmt->tm_min,
+                gmt->tm_sec);     
+	    return filename;
+	}
+	void InitByPath(const char* path){
+	    if (path == NULL)
+		   return Init(NULL);
+	    char filename[512] = {0};
+		sprintf(filename, "%s/%s", path, GetRandLogName());
+		Init(filename);
+	}
 	void Init(const char* filename = NULL) {
 		if (fd) {fclose(fd);fd = NULL;}
 		if (filename) {
@@ -73,17 +97,7 @@ public:
 			fseek(fd, 0, SEEK_END);
 		}
         else {
-            time_t t = time(NULL);
-            struct tm *gmt = localtime(&t);
-            char filename[32] = { 0 };
-            sprintf(filename, "log-%04d%02d%02d-%02d%02d%02d.log",
-                gmt->tm_year+1900,
-                gmt->tm_mon+1,
-                gmt->tm_mday,
-                gmt->tm_hour,
-                gmt->tm_min,
-                gmt->tm_sec);
-            fd = fopen(filename, "w+");
+            fd = fopen(GetRandLogName(), "w+");
             fseek(fd, 0, SEEK_END);
         }
 	}
