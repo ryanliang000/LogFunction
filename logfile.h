@@ -103,9 +103,10 @@ public:
 	}
 	void Write(char *buff) {
 	    if(!fd) Init(NULL);
-		if (fd && buff) {
-			fwrite(buff, 1, strlen(buff), fd);
-		}
+      if (fd && buff) {
+			  fwrite(buff, 1, strlen(buff), fd);
+        //fsync(fd); // syn buffer to disk
+		  }
 	}
 private:
 	LogFile():fd(NULL) {}

@@ -52,7 +52,7 @@ public:
 	~Elapsed() {
         total_running();
         double msec = m_duration.count() / 1000000.0;
-		LOG("used time<%s>: %.3f(ms)", m_desc.c_str(), msec);
+		    LOG_I("used time<%s>: %.3f(ms)", m_desc.c_str(), msec);
 	}
     void Start() {
         start_running();
