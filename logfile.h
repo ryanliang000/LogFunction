@@ -94,11 +94,11 @@ public:
 		if (fd) {fclose(fd);fd = NULL;}
 		if (filename) {
 			fd = fopen(filename, "w+");
-			fseek(fd, 0, SEEK_END);
+			if (fd) fseek(fd, 0, SEEK_END);
 		}
         else {
             fd = fopen(GetRandLogName(), "w+");
-            fseek(fd, 0, SEEK_END);
+            if (fd) fseek(fd, 0, SEEK_END);
         }
 	}
 	void Write(char *buff) {
